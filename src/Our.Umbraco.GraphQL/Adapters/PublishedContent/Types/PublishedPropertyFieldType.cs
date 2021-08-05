@@ -21,17 +21,23 @@ namespace Our.Umbraco.GraphQL.Adapters.PublishedContent.Types
         {
             var publishedPropertyType = contentType.GetPropertyType(propertyType.Alias);
 
-            var type = publishedPropertyType.ClrType.GetTypeInfo();
-            var unwrappedTypeInfo = type.Unwrap();
+            var clrType = publishedPropertyType.ClrType.GetTypeInfo();
+            var modelType = publishedPropertyType.ModelClrType.GetTypeInfo();
 
-            if (typeof(IPublishedContent).IsAssignableFrom(unwrappedTypeInfo))
-                unwrappedTypeInfo = typeof(IPublishedContent).GetTypeInfo();
-            else if (typeof(IPublishedElement).IsAssignableFrom(unwrappedTypeInfo))
-                unwrappedTypeInfo = typeof(IPublishedElement).GetTypeInfo();
+            var unwrappedTypeInfo = typeRegistry.Get(modelType);
+            if (unwrappedTypeInfo == null)
+            {
+                unwrappedTypeInfo = clrType.Unwrap();
+
+                if (typeof(IPublishedContent).IsAssignableFrom(unwrappedTypeInfo))
+                    unwrappedTypeInfo = typeof(IPublishedContent).GetTypeInfo();
+                else if (typeof(IPublishedElement).IsAssignableFrom(unwrappedTypeInfo))
+                    unwrappedTypeInfo = typeof(IPublishedElement).GetTypeInfo();
+            }
 
             var propertyGraphType = typeRegistry.Get(unwrappedTypeInfo) ?? typeof(StringGraphType).GetTypeInfo();
 
-            propertyGraphType = propertyGraphType.Wrap(type, propertyType.Mandatory, false);
+            propertyGraphType = propertyGraphType.Wrap(unwrappedTypeInfo, propertyType.Mandatory, false);
 
             if (propertyType.VariesByCulture())
             {

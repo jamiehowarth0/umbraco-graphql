@@ -5,10 +5,10 @@ using System.Reflection;
 using System.Web;
 using GraphQL;
 using GraphQL.Types;
+using GraphQL.Types.Relay;
+using GraphQL.Types.Relay.DataObjects;
 using Newtonsoft.Json.Linq;
-using Our.Umbraco.GraphQL.Adapters.Types.Relay;
 using Our.Umbraco.GraphQL.Types;
-using Our.Umbraco.GraphQL.Types.Relay;
 
 namespace Our.Umbraco.GraphQL.Adapters.Types.Resolution
 {
@@ -38,7 +38,7 @@ namespace Our.Umbraco.GraphQL.Adapters.Types.Resolution
             Add<IHtmlString, HtmlGraphType>();
             Add<Uri, UriGraphType>();
             Add<Id, IdGraphType>();
-            Add<PageInfo, PageInfoGraphType>();
+            Add<PageInfo, PageInfoType>();
             Add<JToken, JsonGraphType>();
             Add<JObject, JsonGraphType>();
             Add<JArray, JsonGraphType>();
@@ -49,7 +49,7 @@ namespace Our.Umbraco.GraphQL.Adapters.Types.Resolution
 
         public TypeInfo Get(TypeInfo type)
         {
-            if (type.IsNullable())
+            if (type.IsNullable() && type.IsGenericType)
                 type = type.GenericTypeArguments[0].GetTypeInfo();
 
             return _types.TryGetValue(type, out var graphType) ? graphType : null;

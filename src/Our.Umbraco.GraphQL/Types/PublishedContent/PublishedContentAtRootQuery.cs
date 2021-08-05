@@ -5,9 +5,9 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using GraphQL.Types;
+using GraphQL.Types.Relay.DataObjects;
 using Our.Umbraco.GraphQL.Attributes;
 using Our.Umbraco.GraphQL.Reflection;
-using Our.Umbraco.GraphQL.Types.Relay;
 using Umbraco.Core.Models.PublishedContent;
 using Umbraco.Web.PublishedCache;
 

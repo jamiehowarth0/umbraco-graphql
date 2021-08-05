@@ -32,11 +32,15 @@ namespace Our.Umbraco.GraphQL.Reflection
                 typeInfo = typeInfo.GenericTypeArguments[0].GetTypeInfo();
 
             var isNullable = typeInfo.IsNullable();
-            if (isNullable)
+            if (isNullable && typeInfo.IsGenericType)
+            {
                 return typeInfo.GenericTypeArguments[0].GetTypeInfo();
-
-            var enumerableArgument = GetEnumerableArgument(typeInfo);
-            return enumerableArgument != null ? enumerableArgument.GetTypeInfo() : typeInfo;
+            }
+            else
+            {
+                var enumerableArgument = GetEnumerableArgument(typeInfo);
+                return enumerableArgument != null ? enumerableArgument.GetTypeInfo() : typeInfo;
+            }
         }
 
         public static TypeInfo Wrap(this TypeInfo graphType, TypeInfo typeInfo, bool isNonNull, bool isNonNullItem)

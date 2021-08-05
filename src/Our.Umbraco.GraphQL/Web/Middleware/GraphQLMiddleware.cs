@@ -1,5 +1,4 @@
 using GraphQL;
-using GraphQL.Http;
 using GraphQL.Instrumentation;
 using Microsoft.Owin;
 using StackExchange.Profiling;
@@ -48,84 +47,82 @@ namespace Our.Umbraco.GraphQL.Web.Middleware
             try
             {
                 // TODO: Add ISchemaCacher
-                using (var schema = _schemaBuilder.Build(typeof(Schema<Query>).GetTypeInfo()))
+                var schema = _schemaBuilder.Build(typeof(Schema<Query>).GetTypeInfo());
+                var request = await _requestParser.Parse(context.Request);
+                switch (context.Request.Method)
                 {
-                    var request = await _requestParser.Parse(context.Request);
-                    switch (context.Request.Method)
-                    {
-                        case "POST":
-                            if (request == null)
-                            {
-                                context.Response.StatusCode = 400;
-                                await context.Response.WriteAsync("POST body missing.");
-                                return;
-                            }
-                            break;
-                        default:
-                            context.Response.StatusCode = 405;
-                            await context.Response.WriteAsync("Server supports only POST requests.");
-                            return;
-                    }
-
-                    var requests = request.Select(async requestParams =>
-                    {
-                        var query = requestParams.Query;
-                        var operationName = requestParams.OperationName;
-                        var variables = requestParams.Variables;
-
-                        var start = DateTime.Now;
-                        var miniProfiler = MiniProfiler.StartNew();
-                        var result = await new DocumentExecuter()
-                            .ExecuteAsync(opts =>
-                            {
-                                opts.CancellationToken = context.Request.CallCancelled;
-                                opts.ComplexityConfiguration = _options.ComplexityConfiguration;
-                                opts.EnableMetrics = _options.EnableMetrics;
-
-                                foreach(var fieldMiddleware in _fieldMiddlewareCollection)
-                                {
-                                    opts.FieldMiddleware.Use(nextMiddleware => fieldContext => fieldMiddleware.Resolve(fieldContext, nextMiddleware));
-                                }
-
-                                opts.FieldMiddleware.Use<InstrumentFieldsMiddleware>();
-                                if (_options.EnableMiniProfiler)
-                                    opts.FieldMiddleware.Use<MiniProfilerFieldMiddleware>();
-                                opts.ExposeExceptions = _options.Debug;
-                                opts.Inputs = variables;
-                                opts.Listeners.Add(_dataLoaderDocumentListener);
-                                opts.OperationName = operationName;
-                                opts.Query = query;
-                                opts.Schema = schema;
-                                opts.ValidationRules = DocumentValidator.CoreRules();
-                            });
-
-                        if (result.Errors == null)
+                    case "POST":
+                        if (request == null)
                         {
-                            result.EnrichWithApolloTracing(start);
-                            if (_options.EnableMiniProfiler)
-                            {
-                                if (result.Extensions == null)
-                                    result.Extensions = new Dictionary<string, object>();
-                                result.Extensions["miniProfiler"] = JObject.FromObject(MiniProfiler.Current, new JsonSerializer { ContractResolver = new CamelCasePropertyNamesContractResolver() });
-                            }
+                            context.Response.StatusCode = 400;
+                            await context.Response.WriteAsync("POST body missing.");
+                            return;
                         }
-                        miniProfiler.Stop();
+                        break;
+                    default:
+                        context.Response.StatusCode = 405;
+                        await context.Response.WriteAsync("Server supports only POST requests.");
+                        return;
+                }
 
-                        return result;
-                    });
+                var requests = request.Select(async requestParams =>
+                {
+                    var query = requestParams.Query;
+                    var operationName = requestParams.OperationName;
+                    var variables = requestParams.Variables;
 
-                    var responses = await Task.WhenAll(requests);
+                    var start = DateTime.Now;
+                    var miniProfiler = MiniProfiler.StartNew();
+                    var result = await new DocumentExecuter()
+                        .ExecuteAsync(opts =>
+                        {
+                            opts.CancellationToken = context.Request.CallCancelled;
+                            opts.ComplexityConfiguration = _options.ComplexityConfiguration;
+                            opts.EnableMetrics = _options.EnableMetrics;
+                            opts.Schema = schema;
+                            opts.ThrowOnUnhandledException = _options.Debug;
+                            opts.Inputs = variables;
+                            opts.Listeners.Add(_dataLoaderDocumentListener);
+                            opts.OperationName = operationName;
+                            opts.Query = query;
+                            opts.ValidationRules = DocumentValidator.CoreRules;
 
-                    context.Response.ContentType = "application/json";
+                            foreach (var fieldMiddleware in _fieldMiddlewareCollection)
+                            {
+                                opts.Schema.FieldMiddleware.Use(nextMiddleware => fieldContext => fieldMiddleware.Resolve(fieldContext, nextMiddleware));
+                            }
 
-                    if (false == request.IsBatched)
+                            opts.Schema.FieldMiddleware.Use<InstrumentFieldsMiddleware>();
+                            if (_options.EnableMiniProfiler)
+                                opts.Schema.FieldMiddleware.Use<MiniProfilerFieldMiddleware>();
+                        });
+
+                    if (result.Errors == null)
                     {
-                        await _documentWriter.WriteAsync(context.Response.Body, responses[0]);
+                        result.EnrichWithApolloTracing(start);
+                        if (_options.EnableMiniProfiler)
+                        {
+                            if (result.Extensions == null)
+                                result.Extensions = new Dictionary<string, object>();
+                            result.Extensions["miniProfiler"] = JObject.FromObject(MiniProfiler.Current, new JsonSerializer { ContractResolver = new CamelCasePropertyNamesContractResolver() });
+                        }
                     }
-                    else
-                    {
-                        await _documentWriter.WriteAsync(context.Response.Body, responses);
-                    }
+                    miniProfiler.Stop();
+
+                    return result;
+                });
+
+                var responses = await Task.WhenAll(requests);
+
+                context.Response.ContentType = "application/json";
+
+                if (false == request.IsBatched)
+                {
+                    await _documentWriter.WriteAsync(context.Response.Body, responses[0]);
+                }
+                else
+                {
+                    await _documentWriter.WriteAsync(context.Response.Body, responses);
                 }
             }
             catch (Exception ex)

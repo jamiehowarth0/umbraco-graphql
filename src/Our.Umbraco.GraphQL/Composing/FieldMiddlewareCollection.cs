@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using Our.Umbraco.GraphQL.Middleware;
+using System.Collections.Generic;
+using GraphQL.Instrumentation;
 using Umbraco.Core.Composing;
 
 namespace Our.Umbraco.GraphQL.Composing

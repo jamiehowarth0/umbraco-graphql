@@ -1,5 +1,5 @@
+using System;
 using GraphQL;
-using GraphQL.Http;
 using Our.Umbraco.GraphQL.Adapters;
 using Our.Umbraco.GraphQL.Adapters.Types.Resolution;
 using Our.Umbraco.GraphQL.Builders;
@@ -12,8 +12,8 @@ using Our.Umbraco.GraphQL.Web;
 using Newtonsoft.Json;
 using Our.Umbraco.GraphQL.Adapters.PublishedContent.Visitors;
 using GraphQL.DataLoader;
+using GraphQL.NewtonsoftJson;
 using Our.Umbraco.GraphQL.FieldMiddleware;
-using Our.Umbraco.GraphQL.Middleware;
 
 namespace Our.Umbraco.GraphQL.Compose
 {
@@ -37,8 +37,8 @@ namespace Our.Umbraco.GraphQL.Compose
             composition.Register(new GraphQLRequestParser(new JsonSerializer()));
             composition.Register<IGraphVisitor>(factory => new CompositeGraphVisitor(factory.GetInstance<GraphVisitorCollection>().ToArray()));
 
-            composition.Register<IDependencyResolver>(factory =>
-                new FuncDependencyResolver(type => factory.TryGetInstance(type) ?? factory.CreateInstance(type)), Lifetime.Singleton);
+            composition.Register<IServiceProvider>(factory =>
+                new FuncServiceProvider(type => factory.TryGetInstance(type) ?? factory.CreateInstance(type)), Lifetime.Singleton);
             composition.Register<IDocumentWriter, DocumentWriter>(Lifetime.Singleton);
 
             composition.Register<IDataLoaderContextAccessor, DataLoaderContextAccessor>(Lifetime.Singleton);

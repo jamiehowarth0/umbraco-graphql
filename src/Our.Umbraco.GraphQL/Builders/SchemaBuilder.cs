@@ -11,9 +11,9 @@ namespace Our.Umbraco.GraphQL.Builders
     {
         private readonly IGraphTypeAdapter _graphTypeAdapter;
         private readonly IGraphVisitor _visitor;
-        private readonly IDependencyResolver _dependencyResolver;
+        private readonly IServiceProvider _dependencyResolver;
 
-        public SchemaBuilder(IGraphTypeAdapter graphTypeAdapter, IDependencyResolver dependencyResolver, IGraphVisitor visitor)
+        public SchemaBuilder(IGraphTypeAdapter graphTypeAdapter, IServiceProvider dependencyResolver, IGraphVisitor visitor)
         {
             _graphTypeAdapter = graphTypeAdapter ?? throw new ArgumentNullException(nameof(graphTypeAdapter));
             _dependencyResolver = dependencyResolver ?? throw new ArgumentNullException(nameof(dependencyResolver));

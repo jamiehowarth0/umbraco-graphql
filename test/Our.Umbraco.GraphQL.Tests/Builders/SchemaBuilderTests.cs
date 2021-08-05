@@ -24,7 +24,7 @@ namespace Our.Umbraco.GraphQL.Tests.Builders
                 graphTypeAdapter.Adapt(Arg.Is(typeof(Query).GetTypeInfo())).Returns(queryObjectGraphType);
             }
 
-            return new SchemaBuilder(graphTypeAdapter, new FuncDependencyResolver(Activator.CreateInstance), visitor);
+            return new SchemaBuilder(graphTypeAdapter, new FuncServiceProvider(Activator.CreateInstance), visitor);
         }
 
         [Fact]

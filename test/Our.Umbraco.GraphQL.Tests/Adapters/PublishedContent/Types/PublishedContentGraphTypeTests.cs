@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using FluentAssertions;
+using GraphQL;
 using GraphQL.Types;
 using GraphQL.Types.Relay;
 using NSubstitute;

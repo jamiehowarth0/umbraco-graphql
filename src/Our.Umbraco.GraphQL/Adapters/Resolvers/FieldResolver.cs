@@ -2,6 +2,8 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Web.Http.Dependencies;
 using GraphQL;
 using GraphQL.Resolvers;
 using GraphQL.Types;
@@ -12,20 +14,20 @@ namespace Our.Umbraco.GraphQL.Adapters.Resolvers
     public class FieldResolver : IFieldResolver
     {
         private readonly FieldType _fieldType;
-        private readonly IDependencyResolver _dependencyResolver;
+        private readonly IServiceProvider _dependencyResolver;
 
-        public FieldResolver(FieldType fieldType, IDependencyResolver dependencyResolver)
+        public FieldResolver(FieldType fieldType, IServiceProvider dependencyResolver)
         {
             _fieldType = fieldType ?? throw new ArgumentNullException(nameof(fieldType));
             _dependencyResolver = dependencyResolver ?? throw new ArgumentNullException(nameof(dependencyResolver));
         }
 
-        public object Resolve(ResolveFieldContext context)
+        public object Resolve(IResolveFieldContext context)
         {
             var memberInfo = _fieldType.GetMetadata<MemberInfo>(nameof(MemberInfo));
             var source = context.Source;
             if(source == null || memberInfo.DeclaringType.IsInstanceOfType(source) == false)
-                source = _dependencyResolver.Resolve(memberInfo.DeclaringType);
+                source = _dependencyResolver.GetService(memberInfo.DeclaringType);
 
             switch (memberInfo)
             {
@@ -40,7 +42,7 @@ namespace Our.Umbraco.GraphQL.Adapters.Resolvers
             }
         }
 
-        private object CallMethod(MethodInfo methodInfo, object source,  ResolveFieldContext context)
+        private object CallMethod(MethodInfo methodInfo, object source, IResolveFieldContext context)
         {
             var parameters = methodInfo.GetParameters().ToList();
             var arguments = new object[parameters.Count];
@@ -53,7 +55,7 @@ namespace Our.Umbraco.GraphQL.Adapters.Resolvers
 
                 if (parameterInfo.GetCustomAttribute<InjectAttribute>() != null)
                 {
-                    arguments[i] = _dependencyResolver.Resolve(parameterType);
+                    arguments[i] = _dependencyResolver.GetService(parameterType);
                     continue;
                 }
 

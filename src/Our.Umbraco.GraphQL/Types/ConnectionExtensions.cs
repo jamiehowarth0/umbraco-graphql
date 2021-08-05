@@ -2,14 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Our.Umbraco.GraphQL.Types.Relay;
+using GraphQL.Types.Relay.DataObjects;
 
 namespace Our.Umbraco.GraphQL.Types
 {
     public static class ConnectionExtensions
     {
         public static Connection<TSource> ToConnection<TSource>(this IEnumerable<TSource> source, Func<TSource, object> idSelector,
-             int? first = null, string after = null, int? last = null, string before = null, long? totalCount = null)
+             int? first = null, string after = null, int? last = null, string before = null, int? totalCount = null)
         {
             if(first < 0)
                 throw new ArgumentException($"{nameof(first)} cannot be less than 0.", nameof(first));

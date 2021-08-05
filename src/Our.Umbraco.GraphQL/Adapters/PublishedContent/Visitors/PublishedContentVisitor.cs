@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using GraphQL;
 using GraphQL.Types;
+using GraphQL.Types.Relay;
 using Our.Umbraco.GraphQL.Adapters.PublishedContent.Types;
 using Our.Umbraco.GraphQL.Adapters.Types;
-using Our.Umbraco.GraphQL.Adapters.Types.Relay;
 using Our.Umbraco.GraphQL.Adapters.Types.Resolution;
 using Our.Umbraco.GraphQL.Adapters.Visitors;
 using Our.Umbraco.GraphQL.Types;
@@ -122,7 +123,9 @@ namespace Our.Umbraco.GraphQL.Adapters.PublishedContent.Visitors
                 });
 
             var connectionField = query.GetField(publishedContentType.Alias);
-            connectionField.ResolvedType = new ConnectionGraphType(graphType);
+            var edgeTypeResolver = typeof(EdgeType<>).MakeGenericType(graphType.GetType());
+            var connectionTypeResolver = typeof(ConnectionType<,>).MakeGenericType(graphType.GetType(), edgeTypeResolver);
+            connectionField.ResolvedType = (IComplexGraphType)Activator.CreateInstance(connectionTypeResolver);
             connectionField.Arguments.Add(
                 new QueryArgument(new ListGraphType(new NonNullGraphType(new OrderByGraphType(graphType))))
                     {Name = "orderBy"});

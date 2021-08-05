@@ -1,23 +1,21 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <title>GraphQL for Umbraco</title>
-        <authors>Rasmus John Pedersen, Offroadcode</authors>
-        <owners>rasmusjp, Offroadcode</owners>
-        <description>A GraphQL server for Umbraco</description>
-        <packageLicenseUrl>https://github.com/rasmusjp/umbraco-graphql/raw/master/LICENSE</packageLicenseUrl>
-        <packageProjectUrl>https://github.com/rasmusjp/umbraco-graphql</packageProjectUrl>
-        <packageTags>umbraco umbracocms graphql</packageTags>
-        <copyright>Copyright © 2018 Rasmus John Pedersen</copyright>
-        <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <versionPrefix>0.1.0</versionPrefix>
-    </PropertyGroup>
-
-    <PropertyGroup>
+        <Title>GraphQL for Umbraco</Title>
+        <Authors>Rasmus John Pedersen, Offroadcode</Authors>
+        <Owners>rasmusjp, Offroadcode</Owners>
+        <Description>A GraphQL server for Umbraco</Description>
+        <PackageProjectUrl>https://github.com/umbraco-community/umbraco-graphql</PackageProjectUrl>
+        <PackageTags>umbraco umbracocms graphql</PackageTags>
+        <Copyright>Copyright © 2018 Rasmus John Pedersen</Copyright>
+        <RequireLicenseAcceptance>false</RequireLicenseAcceptance>
+        <VersionPrefix>0.2.0</VersionPrefix>
         <TargetFramework>net472</TargetFramework>
         <AssemblyName>Our.Umbraco.GraphQL</AssemblyName>
         <RootNamespace>Our.Umbraco.GraphQL</RootNamespace>
         <UIRoot>Web\UI\</UIRoot>
         <DefaultItemExcludes>$(DefaultItemExcludes);$(UIRoot)node_modules\**;$(UIRoot).sass-cache\**</DefaultItemExcludes>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>
 
     <ItemGroup>
@@ -41,7 +39,21 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="GraphQL" Version="2.4.0" />
+      <Compile Remove="Types\Relay\**" />
+      <EmbeddedResource Remove="Types\Relay\**" />
+      <None Remove="Types\Relay\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="Adapters\Types\Relay\ConnectionGraphType.cs" />
+      <Compile Remove="Adapters\Types\Relay\EdgeGraphType.cs" />
+      <Compile Remove="Adapters\Types\Relay\PageInfoGraphType.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="GraphQL.DataLoader" Version="4.5.0" />
+        <PackageReference Include="GraphQL.NewtonsoftJson" Version="4.5.0" />
+        <PackageReference Include="GraphQL.Relay" Version="0.6.2" />
         <PackageReference Include="Microsoft.Owin.Cors" Version="4.0.0" />
         <PackageReference Include="Umbraco.SqlServerCE" Version="4.0.0.1" ExcludeAssets="all" />
         <PackageReference Include="UmbracoCms.Core" Version="8.1.0" />
@@ -51,6 +63,21 @@
     <ItemGroup>
       <Reference Include="System.Web" />
     </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Adapters\Types\Relay\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\graphql-dotnet\src\GraphQL\GraphQL.csproj">
+        <Private>true</Private>
+      </ProjectReference>
+    </ItemGroup>
+
+    <Target Name="PushToNuget" AfterTargets="Pack">
+        <Exec Command="dotnet nuget push $(ProjectDir)$(OutputPath)..\$(AssemblyName).$(Version).nupkg -s http://local.nuget.org/" />
+        <Exec Command="dotnet nuget push $(ProjectDir)$(OutputPath)..\$(AssemblyName).$(Version).snupkg -s http://local.nuget.org/" />
+    </Target>
 
     <!--<ItemGroup>
       <Folder Include="Web\UI\" />

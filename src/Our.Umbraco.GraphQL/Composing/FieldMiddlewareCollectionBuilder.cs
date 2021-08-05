@@ -1,4 +1,4 @@
-using Our.Umbraco.GraphQL.Middleware;
+using GraphQL.Instrumentation;
 using Umbraco.Core.Composing;
 
 namespace Our.Umbraco.GraphQL.Composing

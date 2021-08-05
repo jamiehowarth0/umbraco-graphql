@@ -1,8 +1,7 @@
 using System.Threading.Tasks;
 using System.Web;
+using GraphQL;
 using GraphQL.Instrumentation;
-using GraphQL.Types;
-using Our.Umbraco.GraphQL.Middleware;
 using Umbraco.Web;
 
 namespace Our.Umbraco.GraphQL.FieldMiddleware
@@ -18,7 +17,7 @@ namespace Our.Umbraco.GraphQL.FieldMiddleware
             _httpContext = httpContextAccessor.HttpContext;
         }
 
-        public Task<object> Resolve(ResolveFieldContext context, FieldMiddlewareDelegate next)
+        public Task<object> Resolve(IResolveFieldContext context, FieldMiddlewareDelegate next)
         {
             if (HttpContext.Current == null)
                 HttpContext.Current = _httpContext;

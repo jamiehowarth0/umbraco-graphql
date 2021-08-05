@@ -4,17 +4,18 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web.Http.Dependencies;
 using GraphQL;
 using GraphQL.Types;
+using GraphQL.Types.Relay;
+using GraphQL.Types.Relay.DataObjects;
 using Our.Umbraco.GraphQL.Adapters.Resolvers;
 using Our.Umbraco.GraphQL.Adapters.Types;
-using Our.Umbraco.GraphQL.Adapters.Types.Relay;
 using Our.Umbraco.GraphQL.Adapters.Types.Resolution;
 using Our.Umbraco.GraphQL.Adapters.Visitors;
 using Our.Umbraco.GraphQL.Attributes;
 using Our.Umbraco.GraphQL.Reflection;
 using Our.Umbraco.GraphQL.Types;
-using Our.Umbraco.GraphQL.Types.Relay;
 
 namespace Our.Umbraco.GraphQL.Adapters
 {
@@ -22,10 +23,10 @@ namespace Our.Umbraco.GraphQL.Adapters
     {
         private readonly Dictionary<TypeInfo, IGraphType> _cache;
         private readonly ITypeRegistry _typeRegistry;
-        private readonly IDependencyResolver _dependencyResolver;
+        private readonly IServiceProvider _dependencyResolver;
         private readonly IGraphVisitor _visitor;
 
-        public GraphTypeAdapter(ITypeRegistry typeRegistry, IDependencyResolver dependencyResolver,
+        public GraphTypeAdapter(ITypeRegistry typeRegistry, IServiceProvider dependencyResolver,
             IGraphVisitor visitor)
         {
             _typeRegistry = typeRegistry ?? throw new ArgumentNullException(nameof(typeRegistry));
@@ -129,12 +130,14 @@ namespace Our.Umbraco.GraphQL.Adapters
                     foundType = _typeRegistry.Get(unwrappedReturnType.GenericTypeArguments[0].GetTypeInfo());
                     if (foundType != null)
                     {
-                        foundType = typeof(ConnectionGraphType<>).MakeGenericType(foundType).GetTypeInfo();
+                        var edgeGenericType = typeof(EdgeType<>).MakeGenericType(foundType);
+                        foundType = typeof(ConnectionType<,>).MakeGenericType(foundType, edgeGenericType).GetTypeInfo();
                     }
                     else
                     {
-                        resolvedType =
-                            new ConnectionGraphType(Adapt(unwrappedReturnType.GenericTypeArguments[0].GetTypeInfo()));
+                        var edgeGenericType = typeof(EdgeType<>).MakeGenericType(foundType);
+                        var constructed = typeof(ConnectionType<,>).MakeGenericType(foundType, edgeGenericType);
+                        resolvedType = (IGraphType)Activator.CreateInstance(constructed);
                         _visitor.Visit((IObjectGraphType) resolvedType);
                     }
                 }
@@ -144,12 +147,12 @@ namespace Our.Umbraco.GraphQL.Adapters
                     foundType = _typeRegistry.Get(unwrappedReturnType.GenericTypeArguments[0].GetTypeInfo());
                     if (foundType != null)
                     {
-                        foundType = typeof(EdgeGraphType<>).MakeGenericType(foundType).GetTypeInfo();
+                        foundType = typeof(EdgeType<>).MakeGenericType(foundType).GetTypeInfo();
                     }
                     else
                     {
-                        resolvedType =
-                            new EdgeGraphType(Adapt(unwrappedReturnType.GenericTypeArguments[0].GetTypeInfo()));
+                        var constructed = typeof(EdgeType<>).MakeGenericType(foundType);
+                        resolvedType = (IGraphType)Activator.CreateInstance(constructed, args: Adapt(unwrappedReturnType.GenericTypeArguments[0].GetTypeInfo()));
                         _visitor.Visit((IObjectGraphType) resolvedType);
                     }
                 }
