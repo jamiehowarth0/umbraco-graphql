@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using GraphQL;
 using GraphQL.Types;
-using Microsoft.AspNetCore.Http;
 using Our.Umbraco.GraphQL.Adapters.PublishedContent.Types;
 using Our.Umbraco.GraphQL.Adapters.Types;
 using Our.Umbraco.GraphQL.Adapters.Types.Relay;
@@ -11,13 +10,13 @@ using Our.Umbraco.GraphQL.Adapters.Types.Resolution;
 using Our.Umbraco.GraphQL.Adapters.Visitors;
 using Our.Umbraco.GraphQL.Types;
 using Our.Umbraco.GraphQL.Types.PublishedContent;
-using Umbraco.Cms.Core.Models;
-using Umbraco.Cms.Core.Models.PublishedContent;
-using Umbraco.Cms.Core.PublishedCache;
-using Umbraco.Cms.Core.Routing;
-using Umbraco.Cms.Core.Services;
-using Umbraco.Cms.Core.Web;
-using Umbraco.Extensions;
+using Umbraco.Core;
+using Umbraco.Core.Models;
+using Umbraco.Core.Models.PublishedContent;
+using Umbraco.Core.Services;
+using Umbraco.Web;
+using Umbraco.Web.PublishedCache;
+using Umbraco.Web.Routing;
 
 namespace Our.Umbraco.GraphQL.Adapters.PublishedContent.Visitors
 {

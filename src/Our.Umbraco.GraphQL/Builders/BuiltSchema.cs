@@ -4,10 +4,8 @@ using GraphQL.Instrumentation;
 using GraphQL.Introspection;
 using GraphQL.Types;
 using GraphQL.Utilities;
-using Our.Umbraco.GraphQL.Types;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 
 namespace Our.Umbraco.GraphQL.Builders
 {

@@ -1,12 +1,12 @@
+using System.Configuration;
+using System.Linq;
+using System.Web.Http;
+using System.Web.Http.Cors;
 using GraphQL;
-using GraphQL.DataLoader;
 using GraphQL.Server;
 using GraphQL.Server.Transports.AspNetCore;
-using GraphQL.Server.Transports.AspNetCore.SystemTextJson;
-using GraphQL.SystemTextJson;
+using GraphQL.Server.Common;
 using GraphQL.Types;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Our.Umbraco.GraphQL.Adapters;
 using Our.Umbraco.GraphQL.Adapters.Examine.Types;
 using Our.Umbraco.GraphQL.Adapters.Examine.Visitors;
@@ -18,167 +18,113 @@ using Our.Umbraco.GraphQL.Adapters.Types.Resolution;
 using Our.Umbraco.GraphQL.Adapters.Visitors;
 using Our.Umbraco.GraphQL.Builders;
 using Our.Umbraco.GraphQL.Composing;
+using Our.Umbraco.GraphQL.Extensions;
 using Our.Umbraco.GraphQL.Types.PublishedContent;
 using Our.Umbraco.GraphQL.Web;
-using System.Linq;
-using Umbraco.Cms.Core.Composing;
-using Umbraco.Cms.Core.DependencyInjection;
-using Umbraco.Cms.Core.Events;
-using Umbraco.Cms.Core.Notifications;
+using Our.Umbraco.GraphQL.Web.Middleware;
+using Umbraco.Core;
+using Umbraco.Core.Composing;
+using Umbraco.Core.Composing.CompositionExtensions;
+using Umbraco.Core.Services.Implement;
+using Umbraco.Web;
+using PublishedContentQuery = Our.Umbraco.GraphQL.Types.PublishedContent.PublishedContentQuery;
 
 namespace Our.Umbraco.GraphQL.Compose
 {
     public class GraphQLComposer : ComponentComposer<GraphQLComponent>, IUserComposer
     {
-        public override void Compose(IUmbracoBuilder builder)
+        private BuiltSchema _schema;
+
+        public override void Compose(Composition composition)
         {
-            base.Compose(builder);
+            base.Compose(composition);
 
-            builder.Services.AddSingleton<ITypeRegistry, TypeRegistry>();
-            builder.Services.AddSingleton<IGraphTypeAdapter, GraphTypeAdapter>();
-            builder.Services.AddSingleton<ISchemaBuilder, SchemaBuilder>();
-            builder.Services.AddSingleton<ISchema, BuiltSchema>();
+            composition.Register<ITypeRegistry, TypeRegistry>(Lifetime.Singleton);
+            composition.RegisterFor<IGraphVisitor, CompositeGraphVisitor>(factory => new CompositeGraphVisitor(factory.GetAllInstances<GraphVisitorCollection>().Cast<IGraphVisitor>().ToArray()), Lifetime.Singleton);
+            composition.Register<IGraphTypeAdapter, GraphTypeAdapter>(Lifetime.Singleton);
+            composition.Register<ISchemaBuilder, SchemaBuilder>(Lifetime.Singleton);
+            composition.Register<ISchema, BuiltSchema>(Lifetime.Singleton);
 
-            builder.GraphVisitors()
+            composition.GraphVisitors()
                 .Append<PublishedContentVisitor>()
                 .Append<ExamineVisitor>();
 
-            builder.Services.AddSingleton<IGraphVisitor>(factory => new CompositeGraphVisitor(factory.GetService<GraphVisitorCollection>().ToArray()));
+            UmbracoDefaultOwinStartup.MiddlewareConfigured += UmbracoDefaultOwinStartupOnMiddlewareConfigured;
 
-            var serverSection = builder.Config.GetSection("GraphQL:Server");
-            var options = serverSection.Get<GraphQLServerOptions>();
-            builder.Services
-                .AddGraphQL(opts =>
-                {
-                    opts.ComplexityConfiguration = options.Complexity;
-                    opts.EnableMetrics = options.EnableMetrics;
-                })
-                .AddSystemTextJson()
-                .AddDataLoader()
-                .AddRelayGraphTypes();
-
-            builder.Services.AddOptions<GraphQLServerOptions>().Bind(serverSection);
-            builder.Services.ConfigureOptions<GraphQLUmbracoOptionsSetup>();
-            if (options.EnableCors && !string.IsNullOrWhiteSpace(options.CorsPolicyName))
+            if (bool.Parse(ConfigurationManager.AppSettings[Constants.EnableCorsKey]))
             {
-                builder.Services.AddCors(opts =>
-                {
-                    opts.AddPolicy(options.CorsPolicyName, builder =>
-                    {
-                        if (options.CorsAllowedExposedHeaders != null && options.CorsAllowedExposedHeaders.Length > 0)
-                        {
-                            builder.WithExposedHeaders(options.CorsAllowedExposedHeaders);
-                        }
-                        if (options.CorsAllowedHeaders != null && options.CorsAllowedHeaders.Length > 0)
-                        {
-                            if (options.CorsAllowedHeaders.Length == 1 && options.CorsAllowedHeaders[0] == "*")
-                                builder.AllowAnyHeader();
-                            else
-                                builder.WithHeaders(options.CorsAllowedHeaders);
-                        }
-                        if (options.CorsAllowedMethods != null && options.CorsAllowedMethods.Length > 0)
-                        {
-                            if (options.CorsAllowedMethods.Length == 1 && options.CorsAllowedMethods[0] == "*")
-                                builder.AllowAnyMethod();
-                            else
-                                builder.WithMethods(options.CorsAllowedMethods);
-                        }
-                        if (options.CorsAllowedOrigins != null && options.CorsAllowedOrigins.Length > 0)
-                        {
-                            if (options.CorsAllowedOrigins.Length == 1 && options.CorsAllowedOrigins[0] == "*")
-                                builder.AllowAnyOrigin();
-                            else
-                                builder.WithOrigins(options.CorsAllowedOrigins);
-                        }
-                    });
-                });
+                var corsPolicy = new EnableCorsAttribute(
+            ConfigurationManager.AppSettings[Constants.AllowedOriginsKey],
+            ConfigurationManager.AppSettings[Constants.AllowedHeadersKey],
+            ConfigurationManager.AppSettings[Constants.AllowedMethodsKey]
+                );
+                GlobalConfiguration.Configuration.EnableCors(corsPolicy);
             }
-
+            
             // Add all classes that need to be able to be resolved from the service provider
-            builder.Services.AddTransient<ExtendQueryWithUmbracoQuery>();
-            builder.Services.AddTransient<ExtendUmbracoQueryWithPublishedContentQuery>();
-            builder.Services.AddTransient<ExtendUmbracoQueryWithExamineQuery>();
-            builder.Services.AddTransient<ExamineQuery>();
-            builder.Services.AddTransient<PublishedContentAtRootQuery>();
-            builder.Services.AddTransient<PublishedContentByTypeQuery>();
-            builder.Services.AddTransient<PublishedContentQuery>();
-            builder.Services.AddTransient<UmbracoQuery>();
-            builder.Services.AddTransient<PublishedContentTypeGraphType>();
-            builder.Services.AddTransient<PublishedElementInterfaceGraphType>();
-            builder.Services.AddTransient<PublishedContentInterfaceGraphType>();
-            builder.Services.AddTransient<PublishedItemTypeGraphType>();
-            builder.Services.AddTransient<ContentVariationGraphType>();
-            builder.Services.AddTransient<BlockListItemGraphType>();
-            builder.Services.AddTransient<UrlModeGraphType>();
-            builder.Services.AddTransient<UdiGraphType>();
-            builder.Services.AddTransient<LinkGraphType>();
-            builder.Services.AddTransient<JsonGraphType>();
-            builder.Services.AddTransient<HtmlEncodedStringGraphType>();
-            builder.Services.AddTransient<SearchResultsInterfaceGraphType>();
-            builder.Services.AddTransient<SearchResultInterfaceGraphType>();
-            builder.Services.AddTransient<SearchResultFieldsGraphType>();
-            builder.Services.AddTransient<BooleanOperationGraphType>();
-            builder.Services.AddTransient<SortDirectionGraphType>();
-            builder.Services.AddTransient(typeof(ConnectionGraphType<>));
-            builder.Services.AddTransient(typeof(OrderByGraphType<>));
-            builder.Services.AddTransient<Adapters.Types.IdGraphType>();
+            composition.RegisterAuto<ExtendQueryWithUmbracoQuery>();
+            composition.RegisterAuto<ExtendUmbracoQueryWithPublishedContentQuery>();
+            composition.RegisterAuto<ExtendUmbracoQueryWithExamineQuery>();
+            composition.RegisterAuto<ExamineQuery>();
+            composition.RegisterAuto<PublishedContentAtRootQuery>();
+            composition.RegisterAuto<PublishedContentByTypeQuery>();
+            composition.RegisterAuto<PublishedContentQuery>();
+            composition.RegisterAuto<UmbracoQuery>();
+            composition.RegisterAuto<PublishedContentTypeGraphType>();
+            composition.RegisterAuto<PublishedElementInterfaceGraphType>();
+            composition.RegisterAuto<PublishedContentInterfaceGraphType>();
+            composition.RegisterAuto<PublishedItemTypeGraphType>();
+            composition.RegisterAuto<ContentVariationGraphType>();
+            composition.RegisterAuto<BlockListItemGraphType>();
+            composition.RegisterAuto<UrlModeGraphType>();
+            composition.RegisterAuto<UdiGraphType>();
+            composition.RegisterAuto<LinkGraphType>();
+            composition.RegisterAuto<JsonGraphType>();
+            composition.RegisterAuto<HtmlEncodedStringGraphType>();
+            composition.RegisterAuto<SearchResultsInterfaceGraphType>();
+            composition.RegisterAuto<SearchResultInterfaceGraphType>();
+            composition.RegisterAuto<SearchResultFieldsGraphType>();
+            composition.RegisterAuto<BooleanOperationGraphType>();
+            composition.RegisterAuto<SortDirectionGraphType>();
+            composition.RegisterAuto(typeof(ConnectionGraphType<>));
+            composition.RegisterAuto(typeof(OrderByGraphType<>));
+            composition.RegisterAuto<global::GraphQL.Types.IdGraphType>();
 
-            builder.AddNotificationHandler<ContentTypeChangedNotification, SchemaInvalidator>();
-            builder.AddNotificationHandler<ContentTypeDeletedNotification, SchemaInvalidator>();
-            builder.AddNotificationHandler<ContentTypeMovedNotification, SchemaInvalidator>();
-            builder.AddNotificationHandler<ContentTypeSavedNotification, SchemaInvalidator>();
-            builder.AddNotificationHandler<DataTypeDeletedNotification, SchemaInvalidator>();
-            builder.AddNotificationHandler<DataTypeMovedNotification, SchemaInvalidator>();
-            builder.AddNotificationHandler<DataTypeSavedNotification, SchemaInvalidator>();
-            builder.AddNotificationHandler<MediaTypeChangedNotification, SchemaInvalidator>();
-            builder.AddNotificationHandler<MediaTypeDeletedNotification, SchemaInvalidator>();
-            builder.AddNotificationHandler<MediaTypeMovedNotification, SchemaInvalidator>();
-            builder.AddNotificationHandler<MediaTypeSavedNotification, SchemaInvalidator>();
-            builder.AddNotificationHandler<MemberTypeChangedNotification, SchemaInvalidator>();
-            builder.AddNotificationHandler<MemberTypeDeletedNotification, SchemaInvalidator>();
-            builder.AddNotificationHandler<MemberTypeMovedNotification, SchemaInvalidator>();
-            builder.AddNotificationHandler<MemberTypeSavedNotification, SchemaInvalidator>();
+            ContentTypeService.Saved += (sender, args) => InvalidateSchema();
+            ContentTypeService.SavedContainer += (sender, args) => InvalidateSchema();
+            ContentTypeService.Moved += (sender, args) => InvalidateSchema();
+            ContentTypeService.Deleted += (sender, args) => InvalidateSchema();
+            ContentTypeService.DeletedContainer += (sender, args) => InvalidateSchema();
+
+            MediaTypeService.Saved += (sender, args) => InvalidateSchema();
+            MediaTypeService.SavedContainer += (sender, args) => InvalidateSchema();
+            MediaTypeService.Moved += (sender, args) => InvalidateSchema();
+            MediaTypeService.Deleted += (sender, args) => InvalidateSchema();
+            MediaTypeService.DeletedContainer += (sender, args) => InvalidateSchema();
+
+            MemberTypeService.Saved += (sender, args) => InvalidateSchema();
+            MemberTypeService.SavedContainer += (sender, args) => InvalidateSchema();
+            MemberTypeService.Moved += (sender, args) => InvalidateSchema();
+            MemberTypeService.Deleted += (sender, args) => InvalidateSchema();
+            MemberTypeService.DeletedContainer += (sender, args) => InvalidateSchema();
+
+            DataTypeService.Saved += (sender, args) => InvalidateSchema();
+            DataTypeService.SavedContainer += (sender, args) => InvalidateSchema();
+            DataTypeService.Moved += (sender, args) => InvalidateSchema();
+            DataTypeService.Deleted += (sender, args) => InvalidateSchema();
+            DataTypeService.DeletedContainer += (sender, args) => InvalidateSchema();
         }
 
-        private class SchemaInvalidator :
-            INotificationHandler<ContentTypeChangedNotification>,
-            INotificationHandler<ContentTypeDeletedNotification>,
-            INotificationHandler<ContentTypeMovedNotification>,
-            INotificationHandler<ContentTypeSavedNotification>,
-            INotificationHandler<DataTypeDeletedNotification>,
-            INotificationHandler<DataTypeMovedNotification>,
-            INotificationHandler<DataTypeSavedNotification>,
-            INotificationHandler<MediaTypeChangedNotification>,
-            INotificationHandler<MediaTypeDeletedNotification>,
-            INotificationHandler<MediaTypeMovedNotification>,
-            INotificationHandler<MediaTypeSavedNotification>,
-            INotificationHandler<MemberTypeChangedNotification>,
-            INotificationHandler<MemberTypeDeletedNotification>,
-            INotificationHandler<MemberTypeMovedNotification>,
-            INotificationHandler<MemberTypeSavedNotification>
+        private void UmbracoDefaultOwinStartupOnMiddlewareConfigured(object sender, OwinMiddlewareConfiguredEventArgs e)
         {
-            private readonly BuiltSchema _schema;
+            e.AppBuilder.Use<GraphQLMiddleware>();
+        }
 
-            public SchemaInvalidator(ISchema schema)
-            {
-                _schema = schema as BuiltSchema;
-            }
-
-            public void Handle(ContentTypeChangedNotification notification) => _schema?.InvalidateSchema();
-            public void Handle(ContentTypeDeletedNotification notification) => _schema?.InvalidateSchema();
-            public void Handle(ContentTypeMovedNotification notification) => _schema?.InvalidateSchema();
-            public void Handle(ContentTypeSavedNotification notification) => _schema?.InvalidateSchema();
-            public void Handle(DataTypeDeletedNotification notification) => _schema?.InvalidateSchema();
-            public void Handle(DataTypeMovedNotification notification) => _schema?.InvalidateSchema();
-            public void Handle(DataTypeSavedNotification notification) => _schema?.InvalidateSchema();
-            public void Handle(MediaTypeChangedNotification notification) => _schema?.InvalidateSchema();
-            public void Handle(MediaTypeDeletedNotification notification) => _schema?.InvalidateSchema();
-            public void Handle(MediaTypeMovedNotification notification) => _schema?.InvalidateSchema();
-            public void Handle(MediaTypeSavedNotification notification) => _schema?.InvalidateSchema();
-            public void Handle(MemberTypeChangedNotification notification) => _schema?.InvalidateSchema();
-            public void Handle(MemberTypeDeletedNotification notification) => _schema?.InvalidateSchema();
-            public void Handle(MemberTypeMovedNotification notification) => _schema?.InvalidateSchema();
-            public void Handle(MemberTypeSavedNotification notification) => _schema?.InvalidateSchema();
+        private void InvalidateSchema()
+        {
+            var container = global::Umbraco.Core.Composing.Current.Factory.Concrete as LightInject.ServiceContainer;
+            _schema = container.GetInstance(typeof(BuiltSchema)) as BuiltSchema;
+            _schema?.InvalidateSchema();
         }
     }
 }

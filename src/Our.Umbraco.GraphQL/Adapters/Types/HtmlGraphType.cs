@@ -1,7 +1,6 @@
 using System.Web;
 using GraphQL.Language.AST;
 using GraphQL.Types;
-using Microsoft.AspNetCore.Html;
 
 namespace Our.Umbraco.GraphQL.Adapters.Types
 {

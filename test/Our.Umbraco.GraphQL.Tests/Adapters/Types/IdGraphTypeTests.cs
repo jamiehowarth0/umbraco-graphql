@@ -1,4 +1,3 @@
-using System;
 using FluentAssertions;
 using GraphQL.Language.AST;
 using Our.Umbraco.GraphQL.Adapters.Types;

@@ -139,7 +139,7 @@ namespace Our.Umbraco.GraphQL.Tests.Adapters.Resolvers
             var methodInfo = typeof(Query).GetMethod(nameof(Query.GetInjected));
             var resolver = CreateSUT(methodInfo, serviceProvider, fieldType =>
             {
-                fieldType.Arguments = new QueryArguments(new QueryArgument(typeof(ObjectGraphType))
+                fieldType.Arguments = new QueryArguments(new QueryArgument(typeof(InputObjectGraphType))
                 {
                     Name = "injected"
                 });
@@ -212,7 +212,7 @@ namespace Our.Umbraco.GraphQL.Tests.Adapters.Resolvers
             var methodInfo = typeof(Query).GetMethod(nameof(Query.WithCancallationToken));
             var resolver = CreateSUT(methodInfo, configureFieldType: fieldType =>
             {
-                fieldType.Arguments = new QueryArguments(new QueryArgument(typeof(ObjectGraphType))
+                fieldType.Arguments = new QueryArguments(new QueryArgument(typeof(InputObjectGraphType))
                 {
                     Name = "cancellationToken"
                 });

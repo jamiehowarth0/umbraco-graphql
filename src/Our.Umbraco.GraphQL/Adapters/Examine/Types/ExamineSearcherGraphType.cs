@@ -1,12 +1,14 @@
 using Examine;
-using Examine.Lucene.Providers;
 using Examine.Search;
 using GraphQL;
 using GraphQL.Types;
 using System;
 using System.Linq;
 using System.Reflection;
-using Umbraco.Cms.Core.PublishedCache;
+using Examine.LuceneEngine;
+using Examine.LuceneEngine.Providers;
+using Umbraco.Web.Models.ContentEditing;
+using Umbraco.Web.PublishedCache;
 
 namespace Our.Umbraco.GraphQL.Adapters.Examine.Types
 {
@@ -19,7 +21,7 @@ namespace Our.Umbraco.GraphQL.Adapters.Examine.Types
         public ExamineSearcherGraphType(IPublishedSnapshotAccessor snapshotAccessor, ISearcher searcher, string searcherSafeName)
         {
             Name = $"{searcherSafeName}Searcher";
-            var fields = searcher is BaseLuceneSearcher bls ? bls.GetSearchContext().SearchableFields : null;
+            var fields = searcher is BaseLuceneSearcher bls ? bls.GetAllIndexedFields() : null;
 
             Field<SearchResultsInterfaceGraphType>()
                 .Name("query")
@@ -65,13 +67,17 @@ namespace Our.Umbraco.GraphQL.Adapters.Examine.Types
                 else query = query.OrderByDescending(sortableFields);
             }
 
-            var results = query.Execute(new QueryOptions(ctx.GetArgument<int>("skip"), ctx.GetArgument<int>("take")));
+            var results = (LuceneSearchResults) query.Execute()
+                .Skip(ctx.GetArgument<int>("skip"))
+                .Take(ctx.GetArgument<int>("take"));
             return results;
         }
 
         private ISearchResults GetSearchResults(IResolveFieldContext<ExamineSearcherQuery> ctx)
         {
-            var results = _searcher.Search(ctx.GetArgument<string>("query"), new QueryOptions(ctx.GetArgument<int>("skip"), ctx.GetArgument<int>("take")));
+            var results = (LuceneSearchResults)_searcher.Search(ctx.GetArgument<string>("query"))
+                    .Skip(ctx.GetArgument<int>("skip"))
+                    .Take(ctx.GetArgument<int>("take"));
             return results;
         }
     }

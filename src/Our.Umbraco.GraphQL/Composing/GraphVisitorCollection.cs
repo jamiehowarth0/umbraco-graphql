@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Our.Umbraco.GraphQL.Adapters.Visitors;
-using Umbraco.Cms.Core.Composing;
+using Umbraco.Core.Composing;
 
 namespace Our.Umbraco.GraphQL.Composing
 {

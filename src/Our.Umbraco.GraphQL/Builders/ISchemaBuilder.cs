@@ -1,5 +1,4 @@
 using GraphQL.Types;
-using System;
 
 namespace Our.Umbraco.GraphQL.Builders
 {

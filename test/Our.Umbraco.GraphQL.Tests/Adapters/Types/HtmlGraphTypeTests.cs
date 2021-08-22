@@ -1,7 +1,6 @@
 using System.Web;
 using FluentAssertions;
 using GraphQL.Language.AST;
-using Microsoft.AspNetCore.Html;
 using Our.Umbraco.GraphQL.Adapters.Types;
 using Xunit;
 

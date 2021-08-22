@@ -2,16 +2,16 @@ using System;
 using FluentAssertions;
 using GraphQL.Types;
 using GraphQL.Types.Relay;
-using Microsoft.AspNetCore.Http;
 using NSubstitute;
 using Our.Umbraco.GraphQL.Adapters.PublishedContent.Types;
 using Our.Umbraco.GraphQL.Adapters.Types.Resolution;
-using Umbraco.Cms.Core.Models;
-using Umbraco.Cms.Core.Models.PublishedContent;
-using Umbraco.Cms.Core.Routing;
-using Umbraco.Cms.Core.Web;
+using Umbraco.Core.Models;
+using Umbraco.Core.Models.PublishedContent;
+using Umbraco.Web;
+using Umbraco.Web.Routing;
 using Xunit;
 using IdGraphType = Our.Umbraco.GraphQL.Adapters.Types.IdGraphType;
+using IHttpContextAccessor = Umbraco.Web.IHttpContextAccessor;
 
 namespace Our.Umbraco.GraphQL.Tests.Adapters.PublishedContent.Types
 {
@@ -39,8 +39,8 @@ namespace Our.Umbraco.GraphQL.Tests.Adapters.PublishedContent.Types
         }
 
         [Theory]
-        [InlineData("_ancestors", typeof(ConnectionType<PublishedContentInterfaceGraphType>))]
-        [InlineData("_children", typeof(ConnectionType<PublishedContentInterfaceGraphType>))]
+        [InlineData("_ancestors", typeof(ConnectionType<PublishedContentInterfaceGraphType, EdgeType<PublishedContentInterfaceGraphType>>))]
+        [InlineData("_children", typeof(ConnectionType<PublishedContentInterfaceGraphType, EdgeType<PublishedContentInterfaceGraphType>>))]
         [InlineData("_createDate", typeof(NonNullGraphType<DateTimeGraphType>))]
         [InlineData("_creatorName", typeof(NonNullGraphType<StringGraphType>))]
         [InlineData("_contentType", typeof(NonNullGraphType<PublishedContentTypeGraphType>))]

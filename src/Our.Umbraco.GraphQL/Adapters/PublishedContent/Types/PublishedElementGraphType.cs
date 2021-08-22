@@ -1,9 +1,9 @@
 using GraphQL;
 using GraphQL.Types;
-using Microsoft.AspNetCore.Http;
 using Our.Umbraco.GraphQL.Adapters.Types.Resolution;
-using Umbraco.Cms.Core.Models;
-using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Core.Models;
+using Umbraco.Core.Models.PublishedContent;
+using Umbraco.Web;
 
 namespace Our.Umbraco.GraphQL.Adapters.PublishedContent.Types
 {

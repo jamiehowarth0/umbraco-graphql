@@ -2,16 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using GraphQL;
+using System.Web;
 using GraphQL.Types;
-using Microsoft.AspNetCore.Html;
-using Our.Umbraco.GraphQL.Adapters.PublishedContent.Types;
 using Our.Umbraco.GraphQL.Adapters.Types.Relay;
 using Our.Umbraco.GraphQL.Reflection;
 using Our.Umbraco.GraphQL.Types;
 using Our.Umbraco.GraphQL.Types.Relay;
-using Umbraco.Cms.Core.Models.Blocks;
-using Umbraco.Cms.Core.Strings;
 
 namespace Our.Umbraco.GraphQL.Adapters.Types.Resolution
 {
@@ -42,8 +38,8 @@ namespace Our.Umbraco.GraphQL.Adapters.Types.Resolution
             Add<Uri, UriGraphType>();
             Add<Id, IdGraphType>();
             Add<PageInfo, PageInfoGraphType>();
-            Add<BlockListItem, BlockListItemGraphType>();
-            Add<IHtmlEncodedString, HtmlEncodedStringGraphType>();
+            //Add<BlockListItem, BlockListItemGraphType>();
+            //Add<IHtmlEncodedString, HtmlEncodedStringGraphType>();
         }
 
         public void Add<TType, TGraphType>() where TGraphType : IGraphType =>

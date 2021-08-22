@@ -1,20 +1,18 @@
 using GraphQL;
-using GraphQL.Server;
-using GraphQL.Server.Transports.AspNetCore;
-using GraphQL.Server.Ui.Playground;
 using GraphQL.Types;
 using GraphQL.Validation;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Our.Umbraco.GraphQL.Builders;
-using Our.Umbraco.GraphQL.Types;
 using System;
 using System.Linq;
-using System.Reflection;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using GraphQL.Server.Common;
+using GraphQL.Server.Transports.AspNetCore.Common;
+using GraphQL.Server.Ui.Playground;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
+using Umbraco.Core.Logging;
 
 namespace Our.Umbraco.GraphQL.Web.Middleware
 {
@@ -23,15 +21,15 @@ namespace Our.Umbraco.GraphQL.Web.Middleware
         private readonly RequestDelegate _next;
         private readonly IDocumentExecuter _documentExecuter;
         private readonly IDocumentWriter _documentWriter;
-        private readonly ILogger<GraphQLMiddleware> _logger;
+        private readonly ILogger _logger;
         private readonly ISchemaBuilder _schemaBuilder;
         private readonly IGraphQLRequestDeserializer _graphQLRequestDeserializer;
-        private readonly JsonSerializerOptions _jsonSerializerOptions;
+        private readonly JsonSerializerSettings _jsonSerializerOptions;
 
         public GraphQLMiddleware(RequestDelegate next,
                                  IDocumentExecuter documentExecuter,
                                  IDocumentWriter documentWriter,
-                                 ILogger<GraphQLMiddleware> logger,
+                                 ILogger logger,
                                  ISchemaBuilder schemaBuilder,
                                  IGraphQLRequestDeserializer graphQLRequestDeserializer)
         {
@@ -41,10 +39,7 @@ namespace Our.Umbraco.GraphQL.Web.Middleware
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _schemaBuilder = schemaBuilder;
             _graphQLRequestDeserializer = graphQLRequestDeserializer;
-            _jsonSerializerOptions = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
+            _jsonSerializerOptions = new JsonSerializerSettings();
         }
 
         public async Task Invoke(HttpContext context,
@@ -83,7 +78,7 @@ namespace Our.Umbraco.GraphQL.Web.Middleware
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Could not handle GraphQL request");
+                _logger.Error<GraphQLMiddleware>(ex, "Could not handle GraphQL request");
 
                 context.Response.ContentType = "text/plain";
                 context.Response.StatusCode = 500;
@@ -109,7 +104,7 @@ namespace Our.Umbraco.GraphQL.Web.Middleware
             {
                 foreach (var error in result.Errors)
                 {
-                    _logger.LogError(error.GetBaseException(), "There was an error" + (error.Path == null ? "" : " at [" + string.Join(", ", error.Path) + "]"));
+                    _logger.Error<GraphQLMiddleware>(error.GetBaseException(), "There was an error" + (error.Path == null ? "" : " at [" + string.Join(", ", error.Path) + "]"));
                 }
             }
 

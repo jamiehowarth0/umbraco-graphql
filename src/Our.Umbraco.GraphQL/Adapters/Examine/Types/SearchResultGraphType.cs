@@ -2,7 +2,7 @@ using Examine;
 using GraphQL.Types;
 using Our.Umbraco.GraphQL.Adapters.PublishedContent.Types;
 using System.Collections.Generic;
-using Umbraco.Cms.Core.PublishedCache;
+using Umbraco.Web.PublishedCache;
 
 namespace Our.Umbraco.GraphQL.Adapters.Examine.Types
 {

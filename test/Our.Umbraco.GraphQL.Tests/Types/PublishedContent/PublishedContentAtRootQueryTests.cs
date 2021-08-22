@@ -1,8 +1,8 @@
 using FluentAssertions;
 using NSubstitute;
 using Our.Umbraco.GraphQL.Types.PublishedContent;
-using Umbraco.Cms.Core.Models.PublishedContent;
-using Umbraco.Cms.Core.PublishedCache;
+using Umbraco.Core.Models.PublishedContent;
+using Umbraco.Web.PublishedCache;
 using Xunit;
 
 namespace Our.Umbraco.GraphQL.Tests.Types.PublishedContent

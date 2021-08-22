@@ -15,6 +15,6 @@ namespace Our.Umbraco.GraphQL.Web
         public string[] CorsAllowedHeaders { get; set; }
         public string[] CorsAllowedMethods { get; set; }
         public ComplexityConfiguration Complexity { get; set; } = new ComplexityConfiguration();
-        public PlaygroundOptions Playground { get; set; } = new PlaygroundOptions { GraphQLEndPoint = "/umbraco/graphql", SubscriptionsEndPoint = "/umbraco/graphql" };
+        public GraphQLPlaygroundOptions Playground { get; set; } = new GraphQLPlaygroundOptions { GraphQLEndPoint = "/umbraco/graphql" };
     }
 }

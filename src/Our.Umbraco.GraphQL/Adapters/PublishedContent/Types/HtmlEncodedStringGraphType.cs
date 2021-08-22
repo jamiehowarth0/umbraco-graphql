@@ -1,6 +1,6 @@
+using System.Web;
 using GraphQL.Language.AST;
 using GraphQL.Types;
-using Umbraco.Cms.Core.Strings;
 
 namespace Our.Umbraco.GraphQL.Adapters.PublishedContent.Types
 {
@@ -22,14 +22,14 @@ namespace Our.Umbraco.GraphQL.Adapters.PublishedContent.Types
         public override object ParseValue(object value)
         {
             if (value is string stringValue)
-                return new HtmlEncodedString(stringValue);
+                return new HtmlString(stringValue);
 
             return null;
         }
 
         public override object Serialize(object value)
         {
-            if (value is IHtmlEncodedString htmlString)
+            if (value is HtmlString htmlString)
                 return htmlString.ToHtmlString();
 
             return null;

@@ -19,8 +19,8 @@ namespace Our.Umbraco.GraphQL.Tests.Adapters.PublishedContent.Types
         }
 
         [Theory]
-        [InlineData("_ancestors", typeof(ConnectionType<PublishedContentInterfaceGraphType>))]
-        [InlineData("_children", typeof(ConnectionType<PublishedContentInterfaceGraphType>))]
+        [InlineData("_ancestors", typeof(ConnectionType<PublishedContentInterfaceGraphType, EdgeType<PublishedContentInterfaceGraphType>>))]
+        [InlineData("_children", typeof(ConnectionType<PublishedContentInterfaceGraphType, EdgeType<PublishedContentInterfaceGraphType>>))]
         [InlineData("_createDate", typeof(NonNullGraphType<DateTimeGraphType>))]
         [InlineData("_creatorName", typeof(NonNullGraphType<StringGraphType>))]
         [InlineData("_contentType", typeof(NonNullGraphType<PublishedContentTypeGraphType>))]

@@ -9,7 +9,7 @@ using GraphQL;
 using GraphQL.Types;
 using Our.Umbraco.GraphQL.Adapters.Builders;
 using Our.Umbraco.GraphQL.Types;
-using Umbraco.Cms.Core.PublishedCache;
+using Umbraco.Web.PublishedCache;
 
 namespace Our.Umbraco.GraphQL.Adapters.Examine.Types
 {

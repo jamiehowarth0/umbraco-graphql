@@ -1,6 +1,5 @@
 using FluentAssertions;
 using GraphQL.Types;
-using Lucene.Net.Documents;
 using Our.Umbraco.GraphQL.Adapters.Types.Relay;
 using Xunit;
 
@@ -14,7 +13,7 @@ namespace Our.Umbraco.GraphQL.Tests.Adapters.Types.Relay
         {
             var graphType = new ConnectionGraphType(new ItemGraphType());
 
-            graphType.Name.Should().Be("ItemConnection");
+            graphType.Name.Should().Be("ItemConnectionGraph");
         }
 
         [Fact]
@@ -22,7 +21,7 @@ namespace Our.Umbraco.GraphQL.Tests.Adapters.Types.Relay
         {
             var graphType = new ConnectionGraphType<ItemGraphType>();
 
-            graphType.Name.Should().Be("ItemConnection");
+            graphType.Name.Should().Be("ItemConnectionGraph");
         }
 
         [Fact]

@@ -9,11 +9,11 @@
         <packageTags>umbraco umbracocms graphql</packageTags>
         <copyright>Copyright © 2021 Rasmus John Pedersen</copyright>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <versionPrefix>9.0.0-alpha006</versionPrefix>
+        <versionPrefix>8.0.0-alpha001</versionPrefix>
     </PropertyGroup>
 
     <PropertyGroup>
-        <TargetFramework>net5.0</TargetFramework>
+        <TargetFramework>net472</TargetFramework>
         <AssemblyName>Our.Umbraco.GraphQL</AssemblyName>
         <RootNamespace>Our.Umbraco.GraphQL</RootNamespace>
         <UIRoot>Web\UI\</UIRoot>
@@ -37,8 +37,13 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="GraphQL.Server.Transports.AspNetCore.SystemTextJson" Version="5.0.2" />
-        <PackageReference Include="GraphQL.Server.Ui.Playground" Version="5.0.2" />
-        <PackageReference Include="Umbraco.Cms.Web.Common" Version="9.0.0-beta003" />
+        <PackageReference Include="GraphQL" Version="4.5.0" />
+        <PackageReference Include="GraphQL.Relay" Version="0.6.2" />
+        <PackageReference Include="GraphQL.Server.Transports.AspNetCore" Version="4.4.1" />
+        <PackageReference Include="GraphQL.Server.Ui.Playground" Version="4.4.1" />
+        <PackageReference Include="Microsoft.AspNet.WebApi.Cors" Version="5.2.7" />
+        <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
+        <PackageReference Include="UmbracoCms.Core" Version="8.15.2" />
+        <PackageReference Include="UmbracoCms.Web" Version="8.15.2" />
     </ItemGroup>
 </Project>

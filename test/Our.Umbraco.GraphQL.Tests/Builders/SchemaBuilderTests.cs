@@ -4,7 +4,6 @@ using FluentAssertions;
 using GraphQL;
 using GraphQL.Types;
 using NSubstitute;
-using NSubstitute.ReceivedExtensions;
 using Our.Umbraco.GraphQL.Adapters;
 using Our.Umbraco.GraphQL.Adapters.Visitors;
 using Our.Umbraco.GraphQL.Builders;

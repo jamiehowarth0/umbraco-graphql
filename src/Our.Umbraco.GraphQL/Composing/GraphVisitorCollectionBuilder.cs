@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Our.Umbraco.GraphQL.Adapters.Visitors;
-using Umbraco.Cms.Core.Composing;
+using Umbraco.Core.Composing;
 
 namespace Our.Umbraco.GraphQL.Composing
 {
@@ -10,7 +10,7 @@ namespace Our.Umbraco.GraphQL.Composing
         {
         }
 
-        protected override ServiceLifetime CollectionLifetime => ServiceLifetime.Singleton;
+        protected override Lifetime CollectionLifetime => Lifetime.Singleton;
 
         protected override GraphVisitorCollectionBuilder This => this;
     }
